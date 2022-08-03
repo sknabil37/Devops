@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: development
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-role
+  namespace: development
+rules:
+  - apiGroups: [""]
+    resources: ["services","persistentvolumeclaims","pods"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-rolebinding
+  namespace: development
+subjects:
+    kind: User
+    name: developer
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+    kind: Role
+    name: developer-role
+    apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: developer-pv
+  namespace: development
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+     path: /opt
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: developer-pvc
+  namespace: development
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: local-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jekyll
+  namespace: development
+  labels:
+    run: jekyll
+spec:
+  selector:
+    matchLabels:
+      run: jekyll
+  replicas: 1
+  template:
+    metadata:
+      name: jekyll
+      labels:
+        run: jekyll
+    spec:
+      volumes:
+      - name: site
+        persitentVolumeClaim:
+          claimName: developer-pvc
+      containers:
+      - name: jekyll
+        image: kodekloud/jekyll-serve
+        volumeMounts:
+        - name: site
+          mountPath: /site
+      initContainers:
+      - name: jekyll-init
+        image: kodekloud/jekyll
+        command: ["jekyll","new","/site"]
+        volumeMounts:
+        - name: site
+          mountPath: /site
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jekyll-service
+  namespace: development
+spec:
+  selector:
+    run: jekyll
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 4000
+    protocol: TCP

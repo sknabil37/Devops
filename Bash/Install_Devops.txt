@@ -1,0 +1,40 @@
+#!/bin/bash
+
+hostnamectl set-hostname master.rapidns.com
+
+echo "nameserver 8.8.8.8" >> /etc/hosts
+echo "nameserver 8.8.4.4" >> /etc/hosts
+
+apt-get update
+apt-get dist-upgrade -y
+
+apt-get install software-properties-common -y
+add-apt-repository --yes --update ppa:ansible/ansible
+apt-get install ansible -y
+
+apt-get install docker.io -y
+systemctl enable docker
+systemctl start docker
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+apt-get install kubeadm kubelet kubectl -y
+apt-mark hold kubeadm kubelet kubectl
+
+kubeadm init --pod-network-cidr=10.244.0.0/16
+mkdir -p $HOME/.kube && cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl get pods --all-namespaces
+
+$ sudo kubeadm reset
+$ sudo swapoff -a 
+$ sudo kubeadm init --pod-network-cidr=10.244.10.0/16 --kubernetes- 
+  version "1.18.3"
+$ sudo rm -rf $HOME/.kube
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+$ sudo systemctl enable docker.service
+$ sudo service kubelet restart
+$ kubectl get nodes

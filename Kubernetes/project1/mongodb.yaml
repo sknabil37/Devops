@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  namespace: mongospace
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      name: mongodb
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodbvol
+              mountPath: /etc/mongo
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodbsec
+                  key: mongodbuser
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                  secretKeyRef:
+                    name: mongodbsec
+                    key: mongodbpasswd
+
+      volumes:
+        - name: mongodbvol
+          hostPath:
+            path: /opt/mongo
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodbserv
+  namespace: mongospace
+spec:
+  ports:
+    - targetPort: 27017
+      port: 27017
+      protocol: TCP
+  selector:
+    app: mongodb

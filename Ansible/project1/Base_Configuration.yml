@@ -1,0 +1,105 @@
+---
+- hosts: all
+  become_user: root
+  become: true
+  
+  vars_prompt:
+    - name: hostname
+      prompt: Server Hostname
+      private: no
+
+  tasks:
+    - name: Firewall Service Off
+      tags: centos
+      service:
+          name: firewalld
+          state: stopped
+          enabled: false
+      when: ansible_os_family == "Redhat"
+
+    - name: Firewall Service Off
+      tags: ubuntu
+      service:
+           name: ufw
+           state: stopped
+           enabled: false
+      when: ansible_os_family == "Debian"
+
+    - name: Selinux Disabled
+      tags: centos
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: 'SELINUX=enforcing'
+      when: ansible_os_family == "Redhat"
+
+    - name: YUM update
+      tags: centos
+      yum:
+        name: 'epel-release'
+        update_only: yes
+        update_cache: yes
+      when: ansible_os_family == "Redhat"
+
+    - name: APT update
+      tags: ubuntu
+      apt:
+        upgrade: yes
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Package Install
+      tags: centos, ubuntu
+      package:
+        name:
+          - perl
+          - wget
+          - curl
+        state: present
+
+    - name: Make sure we have a 'wheel' group
+      tags: centos, ubuntu
+      group:
+        name: wheel
+        state: present
+
+    - name: Allow 'wheel' group to have passwordless sudo
+      tags: centos, ubuntu
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Add sudoers users to wheel group
+      tags: centos, ubuntu
+      user:
+          name: sysadmin
+          groups: wheel
+          append: yes
+          state: present
+          createhome: yes
+          shell: /bin/bash
+
+    - name: Change Hostname
+      hostname:
+          name: "{{ hostname }}"
+
+    - name: Add the name server on resolv conf file
+      tags: centos, ubuntu
+      lineinfile:
+          dest: /etc/resolv.conf
+          line: "nameserver 8.8.8.8"
+          state: present
+
+    - name: Add the name server on resolv conf file
+      tags: centos, ubuntu
+      lineinfile:
+          dest: /etc/resolv.conf
+          line: "nameserver 8.8.4.4"
+          state: present
+
+
+
+

@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drupal-pv1
+  namespace: production
+  labels:
+    app: drupal
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/data/pv1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drupal-pv2
+  namespace: production
+  labels:
+    app: drupal
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/data/pv2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drupal-pv3
+  namespace: production
+  labels:
+    app: drupal
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/data/pv3

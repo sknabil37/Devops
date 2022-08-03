@@ -1,0 +1,66 @@
+version: '3.1'
+
+services:
+  postgresdb:
+    image: postgres
+    restart: always
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_db
+      - postgres_password
+      - postgres_user
+    networks:
+      - backend
+
+  nextcloud:
+    image: custom-nextcloud
+    build: .
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=postgresdb
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
+      - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+    depends_on:
+      - postgresdb
+    secrets:
+      - nextcloud_admin_password
+      - nextcloud_admin_user
+      - postgres_db
+      - postgres_password
+      - postgres_user
+
+    networks:
+      - frontend
+      - backend
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  postgresdb:
+  nextcloud:
+
+secrets:
+  nextcloud_admin_password:
+    file: ./nextcloud_admin_password.txt #admin password
+  nextcloud_admin_user:
+    file: ./nextcloud_admin_user.txt #admin username
+  postgres_db:
+    file: ./postgres_db.txt #postgresql db name
+  postgres_password:
+    file: ./postgres_password.txt #postgresql password
+  postgres_user:
+    file: ./postgres_user.txt #postgresql username

@@ -1,0 +1,50 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+
+  tasks:
+    - name: Apache Centos Install
+      tags: centos-apache
+      yum:
+        name: httpd
+        state: latest
+      notify: apache-centos
+      when: ansible_os_family == "Redhat"
+
+    - name: Nginx Install
+      tags: nginx
+      package:
+          name: nginx
+          state: present
+      notify: nginx
+
+    - name: Apache Ubuntu Install
+      tags: ubuntu-apache
+      apt:
+        name: apache2
+        state: latest
+      notify: apache-ubuntu
+      when: ansible_os_family == "Debian"
+
+  handlers:
+    - name: apache-centos
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+      when: not ansible_check_mode
+
+    - name: apache-ubuntu
+      service:
+        name: apache2
+        state: restarted
+        enabled: yes
+        when: not ansible_check_mode
+
+    - name: nginx
+        service:
+          name: nginx
+          state: restarted
+          enabled: yes
+        when: not ansible_check_mode

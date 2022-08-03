@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgressecret
+  namespace: production
+type: Opague
+data:
+  postgrespasswd: ZHJ1cGFs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresconfig
+  namespace: production
+data:
+  postgresuser: drupal
+  postgresdb: drupal_production

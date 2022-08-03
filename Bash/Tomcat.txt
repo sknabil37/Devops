@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Pre-requities
+apt update && apt dist-upgrade -y
+apt install net-tools wget -y
+apt install openjdk-11-jre-headless -y
+
+# Install the tomcat
+cd /opt
+wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.81/bin/apache-tomcat-8.5.81.tar.gz
+tar -xvzf /opt/apache-tomcat-8.5.81.tar.gz
+
+# Execute Permission on the Tomcat start shutdown files
+chmod +x /opt/apache-tomcat-8.5.81/bin/startup.sh 
+chmod +x /opt/apache-tomcat-8.5.81/bin/shutdown.sh
+
+# Softlink the files
+ln -s /opt/apache-tomcat-8.5.81/bin/startup.sh /usr/local/bin/tomcatup
+ln -s /opt/apache-tomcat-8.5.81/bin/shutdown.sh /usr/local/bin/tomcatdown
+
+sed -i -e 's/8080/8090/g' /opt/apache-tomcat-8.5.81/conf/server.xml
+
+sed '{$!{N;s/<Valve.*\n.*allow.* \/>/<!--\n&\n-->/;ty;P;D;:y}} /opt/apache-tomcat-8.5.81/webapps/host-manager/META-INF/context.xml
+sed '{$!{N;s/<Valve.*\n.*allow.* \/>/<!--\n&\n-->/;ty;P;D;:y}} /opt/apache-tomcat-8.5.81/webapps/manager/META-INF/context.xml
+
+cat <<EOF >>/opt/apache-tomcat-8.5.81/conf/tomcat-users.xml
+	<role rolename="manager-gui"/>
+	<role rolename="manager-script"/>
+	<role rolename="manager-jmx"/>
+	<role rolename="manager-status"/>
+	<user username="admin" password="admin" roles="manager-gui, manager-script, manager-jmx, manager-status"/>
+	<user username="deployer" password="deployer" roles="manager-script"/>
+	<user username="tomcat" password="tomcat" roles="manager-gui"/>
+EOF
+
+tomcatup

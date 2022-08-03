@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+
+  tasks:
+    - name: MySQL Installation & other Dependencies
+      tags: ubuntu-mysql
+      apt:
+          name: "{{item}}"
+          state: present
+          update_cache: yes
+      loop:
+          - mysql-server
+          - mysql-client
+          - python3-mysqldb
+          - libmysqlclient-dev
+      notify: sql-ubuntu
+      when: ansible_os_family == "Debian"
+
+    – name: Download MySQL Community Repo Centos
+      tags: centos-mysql
+      get_url:
+        url: http://repo.mysql.com/mysql57-community-release-el7-9.noarch.rpm
+        dest: /opt
+      when: ansible_os_family == "Redhat"
+
+    – name: Install MySQL Community Repo Centos
+      tags: centos-mysql
+      command: /usr/bin/rpm -ivh /opt/mysql-community-release-el7-9.noarch.rpm
+      when: ansible_os_family == "Redhat"
+
+    – name: Install MySQL Server
+      yum:
+        name:
+          - mysql-server
+          - MySQL-python
+        state: present
+      notify: sql-centos
+      when: ansible_os_family == "Redhat"
+
+  handlers:
+    - name: sql-ubuntu
+      service:
+          name: mysql
+          state: started
+          enabled: yes
+      when: not ansible_check_mode
+
+    - name: sql-centos
+        service:
+          name: mysqld
+          state: started
+          enabled: yes
+        when: not ansible_check_mode
+
